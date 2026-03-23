@@ -1,0 +1,538 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
+ */
+package officer;
+
+import database.DatabaseHelper;
+import models.LoanApplication;
+import models.User;
+
+import javax.swing.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ *
+ * @author noreen
+ */
+public class EvaluationPanel extends javax.swing.JPanel {
+
+    /**
+     * Creates new form EvaluationPanel
+     */
+    
+    private List<LoanApplication> applications;
+    private int currentIndex = 0;
+    private User currentUser;
+    
+    public EvaluationPanel(User user) {
+        this.currentUser = user;
+        initComponents();
+        loadWeightsFromDatabase();
+        loadApplications();;
+    }
+    private void loadWeightsFromDatabase() {
+    try {
+        ResultSet rs = DatabaseHelper.executeQuery("SELECT * FROM rules_config LIMIT 1");
+        if (rs.next()) {
+            int creditWeight = rs.getInt("credit_weight");
+            int incomeWeight = rs.getInt("income_weight");
+            int purposeWeight = rs.getInt("purpose_weight");
+            int debtWeight = rs.getInt("debt_weight");
+            int clientWeight = rs.getInt("client_weight");
+
+            creditHistoryWeightLabel.setText("/" + creditWeight);
+            incomeLevelWeightLabel.setText("/" + incomeWeight);
+            loanPurposeWeightLabel.setText("/" + purposeWeight);
+            existingDebtWeightLabel.setText("/" + debtWeight);
+            clientTypeWeightLabel.setText("/" + clientWeight);
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+    
+    private void loadApplications() {
+        applications = new ArrayList<>();
+        try {
+            ResultSet rs = DatabaseHelper.executeQuery(
+                "SELECT d.application_id, d.full_name, la.priority_level " +
+                "FROM dashboard d " +
+                "JOIN loan_applications la ON d.application_id = la.application_id " +
+                "LEFT JOIN evaluation_scores es ON d.application_id = es.application_id " +
+                "WHERE d.status = 'In Review' AND (es.is_evaluated IS NULL OR es.is_evaluated = FALSE) " +
+                "ORDER BY FIELD(la.priority_level, 'Platinum', 'Gold', 'Silver', 'Red'), d.application_id"
+            );
+
+            while (rs.next()) {
+                LoanApplication app = new LoanApplication();
+                app.setApplicationId(rs.getLong("application_id"));  // Use getLong to match database type
+                app.setFullName(rs.getString("full_name"));
+                app.setPriorityLevel(rs.getString("priority_level"));
+                applications.add(app);
+            }
+
+            if (!applications.isEmpty()) {
+                currentIndex = 0;
+                loadSelectedApplicationScores();
+            } else {
+          
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadSelectedApplicationScores() {
+        if (applications == null || applications.isEmpty() || currentIndex >= applications.size()) return;
+
+        LoanApplication app = applications.get(currentIndex);
+        applicationIDLabel.setText(String.valueOf(app.getApplicationId()));
+        applicantNameLabel.setText(app.getFullName());
+
+        try {
+            ResultSet rs = DatabaseHelper.executeQuery(
+            "SELECT es.*, la.priority_level " +
+            "FROM evaluation_scores es " +
+            "JOIN loan_applications la ON es.application_id = la.application_id " +
+            "WHERE es.application_id = ?",
+            app.getApplicationId()
+            );
+
+            if (rs.next()) {
+                creditHistoryField.setText(String.valueOf(rs.getInt("credit_score")));
+                incomeLevelField.setText(String.valueOf(rs.getInt("income_score")));
+                loanPurposeField.setText(String.valueOf(rs.getInt("purpose_score")));
+                existingDebtField.setText(String.valueOf(rs.getInt("debt_score")));
+                clientTypeField.setText(String.valueOf(rs.getInt("client_score")));
+                totalLabel.setText(String.valueOf(rs.getDouble("total_score")));
+                priorityLabel.setText(rs.getString("priority_level"));
+            } else {
+                creditHistoryField.setText("");
+                incomeLevelField.setText("");
+                loanPurposeField.setText("");
+                existingDebtField.setText("");
+                clientTypeField.setText("");
+                totalLabel.setText("");
+                priorityLabel.setText("");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        applicantNameLabel = new javax.swing.JLabel();
+        applicationIDLabel = new javax.swing.JLabel();
+        creditHistoryField = new javax.swing.JTextField();
+        incomeLevelField = new javax.swing.JTextField();
+        loanPurposeField = new javax.swing.JTextField();
+        existingDebtField = new javax.swing.JTextField();
+        clientTypeField = new javax.swing.JTextField();
+        creditHistoryWeightLabel = new javax.swing.JLabel();
+        incomeLevelWeightLabel = new javax.swing.JLabel();
+        loanPurposeWeightLabel = new javax.swing.JLabel();
+        existingDebtWeightLabel = new javax.swing.JLabel();
+        clientTypeWeightLabel = new javax.swing.JLabel();
+        jLabel15 = new javax.swing.JLabel();
+        jLabel16 = new javax.swing.JLabel();
+        saveButton = new javax.swing.JButton();
+        nextButton = new javax.swing.JButton();
+        flaggedLabel = new javax.swing.JLabel();
+        totalLabel = new javax.swing.JLabel();
+        priorityLabel = new javax.swing.JLabel();
+
+        setBackground(new java.awt.Color(245, 246, 250));
+
+        jLabel1.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        jLabel1.setText("Applicant:");
+
+        jLabel2.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        jLabel2.setText("Application ID:");
+
+        jLabel3.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        jLabel3.setText("Credit History:");
+
+        jLabel4.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        jLabel4.setText("Income Level:");
+
+        jLabel5.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        jLabel5.setText("Loan Purpose:");
+
+        jLabel6.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        jLabel6.setText("Existing Debt:");
+
+        jLabel7.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        jLabel7.setText("Client Type:");
+
+        creditHistoryField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                creditHistoryFieldActionPerformed(evt);
+            }
+        });
+
+        incomeLevelField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                incomeLevelFieldActionPerformed(evt);
+            }
+        });
+
+        loanPurposeField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loanPurposeFieldActionPerformed(evt);
+            }
+        });
+
+        existingDebtField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                existingDebtFieldActionPerformed(evt);
+            }
+        });
+
+        clientTypeField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clientTypeFieldActionPerformed(evt);
+            }
+        });
+
+        jLabel15.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        jLabel15.setText("Total:");
+
+        jLabel16.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        jLabel16.setText("Priority Level:");
+
+        saveButton.setBackground(new java.awt.Color(0, 51, 102));
+        saveButton.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        saveButton.setForeground(new java.awt.Color(255, 255, 255));
+        saveButton.setText("Save Evaluation");
+        saveButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveButtonActionPerformed(evt);
+            }
+        });
+
+        nextButton.setBackground(new java.awt.Color(0, 51, 102));
+        nextButton.setFont(new java.awt.Font("Helvetica Neue", 1, 13)); // NOI18N
+        nextButton.setForeground(new java.awt.Color(255, 255, 255));
+        nextButton.setText("Next Application");
+        nextButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nextButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(58, 58, 58)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel7)
+                    .addComponent(jLabel6)
+                    .addComponent(jLabel5)
+                    .addComponent(jLabel4)
+                    .addComponent(jLabel3)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(applicantNameLabel)
+                    .addComponent(applicationIDLabel)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(clientTypeField, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(clientTypeWeightLabel))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(creditHistoryField, javax.swing.GroupLayout.PREFERRED_SIZE, 34, Short.MAX_VALUE)
+                            .addComponent(incomeLevelField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)
+                            .addComponent(loanPurposeField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)
+                            .addComponent(existingDebtField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(existingDebtWeightLabel, javax.swing.GroupLayout.Alignment.TRAILING)
+                                            .addComponent(loanPurposeWeightLabel, javax.swing.GroupLayout.Alignment.TRAILING))
+                                        .addGap(162, 162, 162)
+                                        .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 27, Short.MAX_VALUE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(incomeLevelWeightLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(jLabel15)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(totalLabel)
+                                        .addGap(99, 99, 99)))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(nextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel16)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(priorityLabel))))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addComponent(flaggedLabel)
+                                .addGap(143, 143, 143))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(creditHistoryWeightLabel)
+                                .addGap(0, 0, Short.MAX_VALUE)))))
+                .addContainerGap(120, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(46, 46, 46)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel1)
+                            .addComponent(applicantNameLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel2)
+                            .addComponent(applicationIDLabel))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(18, 18, 18)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel3)
+                                    .addComponent(creditHistoryField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(creditHistoryWeightLabel))
+                                .addGap(11, 11, 11)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel16)
+                                    .addComponent(jLabel15)
+                                    .addComponent(totalLabel)
+                                    .addComponent(priorityLabel))
+                                .addGap(18, 18, 18)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(saveButton)
+                                    .addComponent(nextButton)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(7, 7, 7)
+                                .addComponent(flaggedLabel))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(133, 133, 133)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel4)
+                            .addComponent(incomeLevelField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(incomeLevelWeightLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel5)
+                            .addComponent(loanPurposeField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(loanPurposeWeightLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel6)
+                            .addComponent(existingDebtField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(existingDebtWeightLabel))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel7)
+                    .addComponent(clientTypeField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(clientTypeWeightLabel))
+                .addContainerGap(217, Short.MAX_VALUE))
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+    
+    private void creditHistoryFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_creditHistoryFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_creditHistoryFieldActionPerformed
+
+    private void incomeLevelFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_incomeLevelFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_incomeLevelFieldActionPerformed
+
+    private void loanPurposeFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loanPurposeFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_loanPurposeFieldActionPerformed
+
+    private void existingDebtFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_existingDebtFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_existingDebtFieldActionPerformed
+
+    private void clientTypeFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clientTypeFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_clientTypeFieldActionPerformed
+
+    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
+    if (applications == null || applications.isEmpty()) return;
+
+    try {
+        long appId = applications.get(currentIndex).getApplicationId();
+
+        int credit = Integer.parseInt(creditHistoryField.getText());
+        int income = Integer.parseInt(incomeLevelField.getText());
+        int purpose = Integer.parseInt(loanPurposeField.getText());
+        int debt = Integer.parseInt(existingDebtField.getText());
+        int client = Integer.parseInt(clientTypeField.getText());
+
+        double total = credit + income + purpose + debt + client;
+        String priority = calculatePriority(total);
+
+        int updated = DatabaseHelper.executeUpdate(
+            "UPDATE evaluation_scores SET credit_score=?, income_score=?, purpose_score=?, debt_score=?, client_score=?, total_score=?, is_evaluated=TRUE WHERE application_id=?",
+            credit, income, purpose, debt, client, total, appId
+        );
+
+        if (updated > 0) {
+            DatabaseHelper.executeUpdate(
+                "UPDATE loan_applications SET priority_level = ? WHERE application_id = ?",
+                priority, appId
+            );
+
+            totalLabel.setText(String.valueOf(total));
+            priorityLabel.setText(priority);
+            JOptionPane.showMessageDialog(this, "Evaluation saved successfully!");
+        } else {
+            JOptionPane.showMessageDialog(this, "No matching application found to update.\nPlease check if this application has been evaluated before.");
+        }
+
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, "Please enter valid numeric scores.");
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage());
+    }
+    }//GEN-LAST:event_saveButtonActionPerformed
+
+    private void nextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextButtonActionPerformed
+    if (applications == null || applications.isEmpty()) return;
+
+    int confirm = JOptionPane.showConfirmDialog(
+        this,
+        "Are you sure you want to proceed to the next applicant?\n" +
+        "(Clicking Yes means this application will now be sent for review)",
+        "Confirm Proceed",
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        try {
+            // Get current application ID
+            long appId = applications.get(currentIndex).getApplicationId();
+
+            // Mark this application as evaluated
+            DatabaseHelper.executeUpdate(
+                "UPDATE evaluation_scores SET is_evaluated = TRUE WHERE application_id = ?",
+                appId
+            );
+
+            // Move to next application
+            if (currentIndex < applications.size() - 1) {
+                currentIndex++;
+                loadSelectedApplicationScores();
+                enableEvaluation();
+            } else {
+                clearFormFields();
+                disableEvaluation();
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error updating evaluation status: " + e.getMessage());
+        }
+    }
+    }//GEN-LAST:event_nextButtonActionPerformed
+   
+    private String calculatePriority(double total) {
+    try {
+        ResultSet rs = DatabaseHelper.executeQuery("SELECT auto_approve_threshold, auto_reject_threshold FROM rules_config LIMIT 1");
+        if (rs.next()) {
+            int autoApprove = rs.getInt("auto_approve_threshold");
+            int autoReject = rs.getInt("auto_reject_threshold");
+
+            if (total >= autoApprove) {
+                return "Platinum";
+            } else if (total >= 70) {
+                return "Gold";
+            } else if (total >= autoReject) {
+                return "Silver";
+            } else {
+                return "Red";
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    // Fallback (in case query fails)
+    return "Red";
+    }
+    
+    private void clearFormFields() {
+        applicationIDLabel.setText("");
+        applicantNameLabel.setText("");
+        creditHistoryField.setText("");
+        incomeLevelField.setText("");
+        loanPurposeField.setText("");
+        existingDebtField.setText("");
+        clientTypeField.setText("");
+        totalLabel.setText("");
+        priorityLabel.setText("");
+    }
+    
+        public boolean isQueueEmpty() {
+        return applications == null || applications.isEmpty();
+    }
+
+    public void disableEvaluation() {
+        saveButton.setEnabled(false);
+        nextButton.setEnabled(false);
+    }
+
+    public void enableEvaluation() {
+        saveButton.setEnabled(true);
+    }
+    
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel applicantNameLabel;
+    private javax.swing.JLabel applicationIDLabel;
+    private javax.swing.JTextField clientTypeField;
+    private javax.swing.JLabel clientTypeWeightLabel;
+    private javax.swing.JTextField creditHistoryField;
+    private javax.swing.JLabel creditHistoryWeightLabel;
+    private javax.swing.JTextField existingDebtField;
+    private javax.swing.JLabel existingDebtWeightLabel;
+    private javax.swing.JLabel flaggedLabel;
+    private javax.swing.JTextField incomeLevelField;
+    private javax.swing.JLabel incomeLevelWeightLabel;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JTextField loanPurposeField;
+    private javax.swing.JLabel loanPurposeWeightLabel;
+    private javax.swing.JButton nextButton;
+    private javax.swing.JLabel priorityLabel;
+    private javax.swing.JButton saveButton;
+    private javax.swing.JLabel totalLabel;
+    // End of variables declaration//GEN-END:variables
+}
